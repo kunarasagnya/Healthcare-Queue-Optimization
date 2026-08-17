@@ -1,0 +1,216 @@
+{
+  "r2_rf": 0.9196,
+  "rmse_rf": 17.5126,
+  "mae_rf": 12.2964,
+  "lambda_rate": 0.562729,
+  "mu_rate": 1.378298,
+  "mean_service_min": 43.5319,
+  "days_in_data": 364,
+  "total_patients": 4916,
+  "peak_mean": 81.89,
+  "nonpeak_mean": 63.3,
+  "urgency_means": {
+    "Critical": 18.35,
+    "High": 43.19,
+    "Low": 163.86,
+    "Medium": 93.7
+  },
+  "queue_table": [
+    {
+      "servers": 1,
+      "rho": 0.4083,
+      "Pq": 0.4083,
+      "Lq": 0.2817,
+      "Wq_min": 30.04,
+      "W_min": 73.57,
+      "L": 0.69
+    },
+    {
+      "servers": 2,
+      "rho": 0.2041,
+      "Pq": 0.0692,
+      "Lq": 0.0178,
+      "Wq_min": 1.89,
+      "W_min": 45.42,
+      "L": 0.426
+    },
+    {
+      "servers": 3,
+      "rho": 0.1361,
+      "Pq": 0.0087,
+      "Lq": 0.0014,
+      "Wq_min": 0.15,
+      "W_min": 43.68,
+      "L": 0.4097
+    },
+    {
+      "servers": 4,
+      "rho": 0.1021,
+      "Pq": 0.0009,
+      "Lq": 0.0001,
+      "Wq_min": 0.01,
+      "W_min": 43.54,
+      "L": 0.4084
+    },
+    {
+      "servers": 5,
+      "rho": 0.0817,
+      "Pq": 0.0001,
+      "Lq": 0.0,
+      "Wq_min": 0.0,
+      "W_min": 43.53,
+      "L": 0.4083
+    },
+    {
+      "servers": 6,
+      "rho": 0.068,
+      "Pq": 0.0,
+      "Lq": 0.0,
+      "Wq_min": 0.0,
+      "W_min": 43.53,
+      "L": 0.4083
+    }
+  ],
+  "what_if": [
+    {
+      "servers": 2,
+      "rho": 0.2041,
+      "Pq": 0.0692,
+      "Lq": 0.0178,
+      "Wq_min": 1.89,
+      "W_min": 45.42,
+      "L": 0.426,
+      "label": "Baseline (c=2, avg load)"
+    },
+    {
+      "servers": 3,
+      "rho": 0.1361,
+      "Pq": 0.0087,
+      "Lq": 0.0014,
+      "Wq_min": 0.15,
+      "W_min": 43.68,
+      "L": 0.4097,
+      "label": "Add 1 server \u2014 c=3"
+    },
+    {
+      "servers": 2,
+      "rho": 0.4083,
+      "Pq": 0.2367,
+      "Lq": 0.1633,
+      "Wq_min": 8.71,
+      "W_min": 52.24,
+      "L": 0.9799,
+      "label": "Peak surge \u00d72, c=2"
+    },
+    {
+      "servers": 3,
+      "rho": 0.2722,
+      "Pq": 0.0548,
+      "Lq": 0.0205,
+      "Wq_min": 1.09,
+      "W_min": 44.62,
+      "L": 0.8371,
+      "label": "Peak surge + c=3"
+    },
+    {
+      "servers": 2,
+      "rho": 0.1633,
+      "Pq": 0.0459,
+      "Lq": 0.0089,
+      "Wq_min": 0.95,
+      "W_min": 35.78,
+      "L": 0.3356,
+      "label": "20% faster, c=2"
+    },
+    {
+      "servers": 3,
+      "rho": 0.1089,
+      "Pq": 0.0047,
+      "Lq": 0.0006,
+      "Wq_min": 0.06,
+      "W_min": 34.89,
+      "L": 0.3272,
+      "label": "20% faster + c=3"
+    }
+  ],
+  "top_features": [
+    {
+      "Feature": "Urgency Level_Low",
+      "Importance": 0.5963196082921786
+    },
+    {
+      "Feature": "Urgency Level_Medium",
+      "Importance": 0.18401524158599034
+    },
+    {
+      "Feature": "Time of Day_Evening",
+      "Importance": 0.04599596289467906
+    },
+    {
+      "Feature": "Season_Winter",
+      "Importance": 0.0332505866571093
+    },
+    {
+      "Feature": "Day of Week_Monday",
+      "Importance": 0.025884603650885126
+    },
+    {
+      "Feature": "Season_Summer",
+      "Importance": 0.01876182317696671
+    },
+    {
+      "Feature": "Nurse-to-Patient Ratio",
+      "Importance": 0.01680470879954844
+    },
+    {
+      "Feature": "Facility Size (Beds)",
+      "Importance": 0.015162510272758443
+    },
+    {
+      "Feature": "Time of Day_Early Morning",
+      "Importance": 0.013752039189658498
+    },
+    {
+      "Feature": "Day of Week_Sunday",
+      "Importance": 0.012667504413080408
+    },
+    {
+      "Feature": "Urgency Level_High",
+      "Importance": 0.011089724248595344
+    },
+    {
+      "Feature": "Specialist Availability",
+      "Importance": 0.008504961639252524
+    }
+  ],
+  "upper_fence": 264.5,
+  "feature_names": [
+    "Nurse-to-Patient Ratio",
+    "Specialist Availability",
+    "Facility Size (Beds)",
+    "Urgency Level_High",
+    "Urgency Level_Low",
+    "Urgency Level_Medium",
+    "Time of Day_Early Morning",
+    "Time of Day_Evening",
+    "Time of Day_Late Morning",
+    "Time of Day_Night",
+    "Day of Week_Monday",
+    "Day of Week_Saturday",
+    "Day of Week_Sunday",
+    "Day of Week_Thursday",
+    "Day of Week_Tuesday",
+    "Day of Week_Wednesday",
+    "Season_Spring",
+    "Season_Summer",
+    "Season_Winter",
+    "Region_Urban"
+  ],
+  "drop_first_categories": {
+    "Urgency Level": "Critical",
+    "Time of Day": "Afternoon",
+    "Day of Week": "Friday",
+    "Season": "Fall",
+    "Region": "Rural"
+  }
+}

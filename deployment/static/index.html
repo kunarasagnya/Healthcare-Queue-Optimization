@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Healthcare Queue Optimisation — Osmania University</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header>
+  <div class="header-inner">
+    <div class="logo-block">
+      <span class="logo-icon">🏥</span>
+      <div>
+        <h1>Healthcare Queue Optimisation System</h1>
+        <p class="subtitle">Statistical Analysis and Optimisation of Patient Waiting Time</p>
+      </div>
+    </div>
+    <div class="uni-badge">
+      <span>MSc Data Science</span>
+      <span class="dot">·</span>
+      <span>Osmania University</span>
+      <span class="dot">·</span>
+      <span>Capstone Project II</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════ NAV TABS ═══════════════════════ -->
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="showPage('predict')">📊 Page 1 — Wait Time Prediction</button>
+  <button class="tab-btn"        onclick="showPage('queue')">⚙️ Page 2 — Queue Optimisation</button>
+  <button class="tab-btn"        onclick="showPage('insights')">💡 Page 3 — Insights &amp; Findings</button>
+</nav>
+
+<!-- ═══════════════════════ PAGE 1: PREDICTION ═══════════════════════ -->
+<div id="page-predict" class="page active">
+  <div class="page-header">
+    <h2>📊 Patient Wait Time Prediction</h2>
+    <p class="page-desc">
+      Predicts total ER wait time using the trained <strong>Random Forest Regressor</strong>
+      (R² = <span id="r2-val">—</span>, RMSE = <span id="rmse-val">—</span> min).
+      Features: Urgency Level, Time of Day, Day of Week, Season, Region, Nurse-to-Patient Ratio,
+      Specialist Availability, Facility Size. Encoded via one-hot encoding with drop_first=True
+      (notebook Section 6).
+    </p>
+  </div>
+
+  <div class="two-col">
+    <!-- INPUT FORM -->
+    <div class="card form-card">
+      <h3 class="card-title">🔢 Patient Visit Details</h3>
+
+      <div class="form-grid">
+        <label>Urgency Level
+          <select id="urgency_level">
+            <option>Critical</option>
+            <option>High</option>
+            <option selected>Medium</option>
+            <option>Low</option>
+          </select>
+        </label>
+
+        <label>Time of Day
+          <select id="time_of_day">
+            <option>Early Morning</option>
+            <option>Late Morning</option>
+            <option selected>Afternoon</option>
+            <option>Evening</option>
+            <option>Night</option>
+          </select>
+        </label>
+
+        <label>Day of Week
+          <select id="day_of_week">
+            <option>Monday</option>
+            <option>Tuesday</option>
+            <option>Wednesday</option>
+            <option>Thursday</option>
+            <option>Friday</option>
+            <option>Saturday</option>
+            <option selected>Sunday</option>
+          </select>
+        </label>
+
+        <label>Season
+          <select id="season">
+            <option>Spring</option>
+            <option selected>Summer</option>
+            <option>Fall</option>
+            <option>Winter</option>
+          </select>
+        </label>
+
+        <label>Region
+          <select id="region">
+            <option selected>Urban</option>
+            <option>Rural</option>
+          </select>
+        </label>
+
+        <label>Nurse-to-Patient Ratio
+          <input type="number" id="nurse_ratio" value="3" min="1" max="10" />
+        </label>
+
+        <label>Specialist Availability
+          <input type="number" id="specialist" value="2" min="0" max="10" />
+        </label>
+
+        <label>Facility Size (Beds)
+          <input type="number" id="facility_beds" value="80" min="10" max="300" />
+        </label>
+      </div>
+
+      <button class="btn-primary" onclick="submitPrediction()">🔍 Predict Wait Time</button>
+      <div id="pred-error" class="error-msg" style="display:none"></div>
+    </div>
+
+    <!-- OUTPUT PANEL -->
+    <div class="card result-card" id="result-panel" style="display:none">
+      <h3 class="card-title">📋 Prediction Result</h3>
+
+      <div class="result-main">
+        <div class="wait-display">
+          <span class="wait-number" id="wait-num">—</span>
+          <span class="wait-unit">minutes</span>
+        </div>
+        <div class="risk-badge-wrap">
+          <span class="risk-badge" id="risk-badge">—</span>
+          <span class="risk-label">Risk Level</span>
+        </div>
+      </div>
+
+      <div class="rec-box" id="rec-box">
+        <span class="rec-icon">💬</span>
+        <p id="rec-text">—</p>
+      </div>
+
+      <div class="breakdown-title">Queue Stage Breakdown (dataset averages):</div>
+      <div class="stage-bars">
+        <div class="stage-row">
+          <span class="stage-name">Registration</span>
+          <div class="stage-bar-track"><div class="stage-bar" id="bar-reg"></div></div>
+          <span class="stage-val" id="val-reg">—</span>
+        </div>
+        <div class="stage-row">
+          <span class="stage-name">Triage</span>
+          <div class="stage-bar-track"><div class="stage-bar" id="bar-tri"></div></div>
+          <span class="stage-val" id="val-tri">—</span>
+        </div>
+        <div class="stage-row">
+          <span class="stage-name">Medical Prof.</span>
+          <div class="stage-bar-track"><div class="stage-bar" id="bar-med"></div></div>
+          <span class="stage-val" id="val-med">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wait time gauge chart -->
+  <div class="card chart-card" id="gauge-card" style="display:none">
+    <h3 class="card-title">📈 Prediction vs Urgency Benchmarks</h3>
+    <div class="chart-wrap-sm">
+      <canvas id="benchmarkChart"></canvas>
+    </div>
+    <p class="chart-note">
+      Blue bar = your prediction | Other bars = dataset mean wait per urgency level
+    </p>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════ PAGE 2: QUEUE OPTIMISATION ═══════════════════════ -->
+<div id="page-queue" class="page">
+  <div class="page-header">
+    <h2>⚙️ M/M/c Queue Optimisation</h2>
+    <p class="page-desc">
+      Computes Erlang-C queue metrics for a given number of servers and scenario.
+      λ (arrival rate) and μ (service rate) are estimated directly from the ER dataset
+      (notebook Section 8). Adjust the sliders to simulate staffing decisions.
+    </p>
+  </div>
+
+  <div class="two-col">
+    <!-- CONTROLS -->
+    <div class="card form-card">
+      <h3 class="card-title">🎛️ Scenario Controls</h3>
+
+      <label class="slider-label">
+        Number of Servers (c): <strong id="servers-val">2</strong>
+        <input type="range" id="servers" min="1" max="6" value="2"
+               oninput="document.getElementById('servers-val').textContent=this.value; runQueue()"/>
+      </label>
+
+      <label class="slider-label">
+        Arrival Rate Multiplier (×baseline): <strong id="lam-val">1.0</strong>
+        <input type="range" id="lam_factor" min="0.5" max="3.0" step="0.1" value="1.0"
+               oninput="document.getElementById('lam-val').textContent=parseFloat(this.value).toFixed(1); runQueue()"/>
+        <span class="hint">1.0 = average load · 2.0 = peak surge · 3.0 = extreme surge</span>
+      </label>
+
+      <label class="slider-label">
+        Service Speed Improvement: <strong id="svc-val">0%</strong>
+        <input type="range" id="service_reduction" min="0" max="0.4" step="0.05" value="0"
+               oninput="document.getElementById('svc-val').textContent=Math.round(this.value*100)+'%'; runQueue()"/>
+        <span class="hint">0% = no change · 20% = digital pre-reg reduces service time</span>
+      </label>
+
+      <div class="queue-params-box" id="qparams">
+        <div class="param-row"><span>λ (arrival rate)</span><span id="q-lam">—</span></div>
+        <div class="param-row"><span>μ (service rate/server)</span><span id="q-mu">—</span></div>
+        <div class="param-row"><span>Mean service time</span><span id="q-svc">—</span></div>
+      </div>
+    </div>
+
+    <!-- QUEUE METRICS -->
+    <div class="card metric-card" id="queue-result">
+      <h3 class="card-title">📐 Queue Metrics (M/M/c)</h3>
+      <div id="queue-status-badge" class="status-badge status-stable">Stable</div>
+
+      <div class="metric-grid">
+        <div class="metric-tile">
+          <div class="metric-val" id="m-rho">—</div>
+          <div class="metric-name">Utilization ρ</div>
+          <div class="metric-hint">Fraction of time servers are busy</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-val" id="m-pq">—</div>
+          <div class="metric-name">P(wait) Erlang-C</div>
+          <div class="metric-hint">Probability a patient has to wait</div>
+        </div>
+        <div class="metric-tile highlight-tile">
+          <div class="metric-val" id="m-wq">—</div>
+          <div class="metric-name">Wq — Queue Wait</div>
+          <div class="metric-hint">Expected wait in queue only (min)</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-val" id="m-w">—</div>
+          <div class="metric-name">W — Total Time</div>
+          <div class="metric-hint">Expected total time in system (min)</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-val" id="m-lq">—</div>
+          <div class="metric-name">Lq — Queue Length</div>
+          <div class="metric-hint">Expected number waiting in queue</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-val" id="m-servers">—</div>
+          <div class="metric-name">Servers (c)</div>
+          <div class="metric-hint">Number of parallel consultation points</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT-IF SCENARIO CHART -->
+  <div class="card chart-card">
+    <h3 class="card-title">📊 What-If Scenario Comparison (notebook Section 9)</h3>
+    <div class="chart-wrap">
+      <canvas id="scenarioChart"></canvas>
+    </div>
+    <p class="chart-note">
+      Green ≤ 30 min (target) · Orange 30–60 min · Red > 60 min.
+      All six scenarios use the exact simulation from the project notebook.
+    </p>
+  </div>
+
+  <!-- Wq vs Servers chart -->
+  <div class="card chart-card">
+    <h3 class="card-title">📉 Queue Wait (Wq) vs Number of Servers</h3>
+    <div class="chart-wrap-sm">
+      <canvas id="wqChart"></canvas>
+    </div>
+    <p class="chart-note">
+      The dashed line marks the 30-minute clinical target for non-emergency patients.
+    </p>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════ PAGE 3: INSIGHTS ═══════════════════════ -->
+<div id="page-insights" class="page">
+  <div class="page-header">
+    <h2>💡 Key Findings &amp; Insights</h2>
+    <p class="page-desc">
+      Summary of statistical results, feature importance, peak vs non-peak analysis,
+      and HMIS real-world validation findings from the complete project notebook.
+    </p>
+  </div>
+
+  <!-- MODEL PERFORMANCE SUMMARY -->
+  <div class="card">
+    <h3 class="card-title">🤖 Model Performance Summary</h3>
+    <div class="metric-grid three-col">
+      <div class="metric-tile">
+        <div class="metric-val" id="ins-r2">—</div>
+        <div class="metric-name">R² Score</div>
+        <div class="metric-hint">Random Forest on 20% test set</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-val" id="ins-rmse">—</div>
+        <div class="metric-name">RMSE (min)</div>
+        <div class="metric-hint">Root Mean Squared Error</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-val" id="ins-mae">—</div>
+        <div class="metric-name">MAE (min)</div>
+        <div class="metric-hint">Mean Absolute Error</div>
+      </div>
+    </div>
+    <p class="insight-note">
+      The Random Forest model was selected as the final prediction model based on its superior
+      R² and RMSE compared to OLS Regression and XGBoost. It was trained with
+      n_estimators=150, max_depth=10, random_state=42 on 80% of the cleaned dataset (n = 4,916).
+    </p>
+  </div>
+
+  <!-- FEATURE IMPORTANCE -->
+  <div class="card chart-card">
+    <h3 class="card-title">🏆 Top 10 Feature Importances (Random Forest)</h3>
+    <div class="chart-wrap">
+      <canvas id="featureChart"></canvas>
+    </div>
+    <p class="chart-note">
+      Importances are computed as mean decrease in impurity across all 150 trees.
+      Urgency Level dominates — consistent with clinical priority triage protocols.
+    </p>
+  </div>
+
+  <!-- PEAK vs NON-PEAK -->
+  <div class="two-col">
+    <div class="card chart-card">
+      <h3 class="card-title">⏰ Peak vs Non-Peak Wait Times</h3>
+      <div class="chart-wrap-sm">
+        <canvas id="peakChart"></canvas>
+      </div>
+      <p class="chart-note">
+        Peak = Late Morning, Afternoon, Evening.
+        Welch T-test confirmed a statistically significant difference (p &lt; 0.05).
+      </p>
+    </div>
+
+    <div class="card chart-card">
+      <h3 class="card-title">🚨 Mean Wait by Urgency Level</h3>
+      <div class="chart-wrap-sm">
+        <canvas id="urgencyChart"></canvas>
+      </div>
+      <p class="chart-note">
+        One-Way ANOVA (F-test) confirmed significant differences across all urgency groups.
+        Tukey HSD showed all pairwise comparisons are significant.
+      </p>
+    </div>
+  </div>
+
+  <!-- KEY FINDINGS TABLE -->
+  <div class="card">
+    <h3 class="card-title">📌 Key Statistical Findings</h3>
+    <table class="findings-table">
+      <thead>
+        <tr><th>Finding</th><th>Test Used</th><th>Result</th><th>Interpretation</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Peak vs Non-Peak wait</td>
+          <td>Welch T-test</td>
+          <td>p &lt; 0.05</td>
+          <td>Peak hours significantly increase wait time</td>
+        </tr>
+        <tr>
+          <td>Wait across urgency levels</td>
+          <td>One-Way ANOVA + Tukey HSD</td>
+          <td>p &lt; 0.001</td>
+          <td>All four urgency groups have distinct mean wait times</td>
+        </tr>
+        <tr>
+          <td>Urgency vs Patient Outcome</td>
+          <td>Chi-Square Test</td>
+          <td>p &lt; 0.001</td>
+          <td>Higher urgency → higher admission rate; Low urgency → higher LWBS rate</td>
+        </tr>
+        <tr>
+          <td>Seasonal effect on wait</td>
+          <td>Kruskal-Wallis Test</td>
+          <td>Conditional</td>
+          <td>Winter/Fall may show higher wait — tested non-parametrically</td>
+        </tr>
+        <tr>
+          <td>Adding 1 server (c=2→3)</td>
+          <td>M/M/c Queue Theory</td>
+          <td>Wq drops ~40%</td>
+          <td>Most cost-effective staffing intervention</td>
+        </tr>
+        <tr>
+          <td>HMIS real-world validation</td>
+          <td>Comparative analysis</td>
+          <td>λ consistent</td>
+          <td>Simulated λ aligns with PHC-to-CHC HMIS attendance figures</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- HMIS VALIDATION SUMMARY -->
+  <div class="card">
+    <h3 class="card-title">🏛️ HMIS External Validation Summary</h3>
+    <div class="hmis-grid">
+      <div class="hmis-tile">
+        <div class="hmis-label">Data Source</div>
+        <div class="hmis-val">Govt. of India HMIS<br/>2018–19</div>
+      </div>
+      <div class="hmis-tile">
+        <div class="hmis-label">Simulated λ</div>
+        <div class="hmis-val"><span id="hmis-lam">—</span> patients/hour</div>
+      </div>
+      <div class="hmis-tile">
+        <div class="hmis-label">Validation Finding</div>
+        <div class="hmis-val">Simulated λ is consistent with PHC–CHC attendance range in HMIS</div>
+      </div>
+      <div class="hmis-tile">
+        <div class="hmis-label">Implication</div>
+        <div class="hmis-val">Real Indian facilities face higher demand — our model is conservative</div>
+      </div>
+    </div>
+    <p class="insight-note">
+      The HMIS dataset (160 rows, 11 columns) from the Ministry of AYUSH covers outpatient attendance
+      across Indian states. It was used to validate whether the simulated arrival rate is realistic
+      for Indian government healthcare facilities. Telangana district hospitals showed higher λ values,
+      confirming that our findings are conservative and real-world impact would be greater.
+    </p>
+  </div>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="card">
+    <h3 class="card-title">✅ Project Recommendations</h3>
+    <div class="rec-table">
+      <div class="rec-row priority-high">
+        <div class="rec-priority">HIGH</div>
+        <div class="rec-text">Deploy one additional doctor or consultation room during 12:00–20:00 daily</div>
+      </div>
+      <div class="rec-row priority-high">
+        <div class="rec-priority">HIGH</div>
+        <div class="rec-text">Introduce fast-track lanes for Low and Medium urgency patients to reduce queue mixing</div>
+      </div>
+      <div class="rec-row priority-med">
+        <div class="rec-priority">MEDIUM</div>
+        <div class="rec-text">Implement digital pre-registration to reduce registration stage time by ~30%</div>
+      </div>
+      <div class="rec-row priority-med">
+        <div class="rec-priority">MEDIUM</div>
+        <div class="rec-text">Use the trained Random Forest model for real-time wait time estimation at triage</div>
+      </div>
+      <div class="rec-row priority-low">
+        <div class="rec-priority">LOW</div>
+        <div class="rec-text">Build an M/M/c monitoring dashboard tracking λ and ρ per shift for supervisors</div>
+      </div>
+      <div class="rec-row priority-low">
+        <div class="rec-priority">LOW</div>
+        <div class="rec-text">Revisit staffing models seasonally, particularly for Winter to manage flu-season surge</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer>
+  <p>
+    <strong>Statistical Analysis and Optimisation of Patient Waiting Time in Healthcare Queue Systems</strong>
+    &nbsp;·&nbsp; MSc Data Science — Capstone Project II &nbsp;·&nbsp; Department of Statistics
+    &nbsp;·&nbsp; Osmania University &nbsp;·&nbsp; 2023–2025
+  </p>
+  <p class="footer-note">
+    Model: Random Forest Regressor &nbsp;|&nbsp;
+    Queue Theory: M/M/c (Erlang-C) &nbsp;|&nbsp;
+    Validation: HMIS 2018-19 &nbsp;|&nbsp;
+    API: FastAPI
+  </p>
+</footer>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
