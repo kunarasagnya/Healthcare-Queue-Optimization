@@ -375,7 +375,7 @@ This helps users understand how the overall patient journey is distributed acros
 
 ### Dashboard Screenshot
 
-![Patient Wait Time Prediction](screenshots/wait-time-prediction.png)
+![Patient Wait Time Prediction](https://raw.githubusercontent.com/kunarasagnya/Healthcare-Queue-Optimization/main/screenshots/wait-time-prediction.png)
 
 ---
 
@@ -420,7 +420,7 @@ These values change when the scenario controls are adjusted.
 
 ### Queue Optimization Screenshot
 
-![M/M/c Queue Optimization](screenshots/mmc-queue-optimization.png)
+![M/M/c Queue Optimization](https://raw.githubusercontent.com/kunarasagnya/Healthcare-Queue-Optimization/main/screenshots/mmc-queue-optimization.png)
 
 ---
 
@@ -441,7 +441,7 @@ This allows healthcare decision-makers to compare different staffing and service
 
 ### What-If Scenario Screenshot
 
-![What-If Scenario Comparison](screenshots/what-if-scenarios.png)
+![What-If Scenario Comparison](https://raw.githubusercontent.com/kunarasagnya/Healthcare-Queue-Optimization/main/screenshots/what-if-scenarios.png)
 
 ---
 
@@ -455,7 +455,7 @@ A 30-minute target line is included in the visualization as a reference for non-
 
 ### Visualization
 
-![Queue Wait vs Number of Servers](screenshots/queue-wait-vs-servers.png)
+![Queue Wait vs Number of Servers](https://raw.githubusercontent.com/kunarasagnya/Healthcare-Queue-Optimization/main/screenshots/queue-wait-vs-servers.png)
 
 ---
 
@@ -475,7 +475,7 @@ It includes:
 
 ### Insights Dashboard
 
-![Insights and Findings](screenshots/insights-findings.png)
+![Insights and Findings](https://raw.githubusercontent.com/kunarasagnya/Healthcare-Queue-Optimization/main/screenshots/insights-findings.png)
 
 ---
 
